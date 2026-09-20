@@ -193,3 +193,15 @@ El consumidor de pagos reintenta 3 veces (`spring.rabbitmq.listener.simple.retry
 # Pago inválido: termina en pagos-dlq (verlo en la consola de RabbitMQ)
 curl -X POST http://localhost:8080/api/pago -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"miembroId":1,"monto":-5}'
 ```
+
+## Streaming con Kafka
+
+Broker Kafka (modo KRaft, un solo nodo) en el `docker-compose.yml` raíz: `docker compose up -d kafka` → `localhost:9092`.
+
+| Función | Servicio | Detalle |
+|---|---|---|
+| Ocupación en tiempo real | clases | `POST /api/ocupacion/{claseId}` (ADMIN/TRAINER) publica en el topic `ocupacion-clases`; `OcupacionClaseConsumer` (grupo `monitoreo-grupo`) alimenta el dashboard `GET /api/ocupacion`. |
+| Análisis de entrenamiento | miembros | `POST /api/entrenamiento` publica en `datos-entrenamiento`; un Kafka Streams agrega por miembro en ventanas de 7 días hacia `resumen-entrenamiento` (store `resumen-entrenamiento-store`). Consulta: `GET /api/entrenamiento/resumen/{miembroId}`. |
+| Recuperación ante fallos | clases | `ocupacion-clases` retiene el log 7 días (`retention.ms`). `RecuperacionService` lee el log con un consumidor manual, guarda cada resultado y su offset (checkpoint) en **una sola transacción** en la BD (`GET /api/ocupacion/historial` y `/checkpoint`) y, al reiniciar, hace `seek` al último checkpoint + 1. Sin checkpoint reprocesa desde el inicio del log. |
+
+Demostración de recuperación: detener clases, publicar un evento en `ocupacion-clases` (por ejemplo con `kafka-console-producer.sh`), volver a iniciar clases y ver en el log `retoma desde el checkpoint: offset N` procesando solo lo pendiente.
