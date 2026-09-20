@@ -1,11 +1,14 @@
 package co.analisys.clase.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import co.analisys.clase.client.EntrenadorClient;
+import co.analisys.clase.dto.HorarioCambiadoEvent;
 import co.analisys.clase.exception.ClaseNoEncontradaException;
+import co.analisys.clase.messaging.HorarioPublisher;
 import co.analisys.clase.model.Clase;
 import co.analisys.clase.repository.ClaseRepository;
 
@@ -15,9 +18,26 @@ public class ClaseService {
     private final ClaseRepository claseRepository;
     private final EntrenadorClient entrenadorClient;
 
-    public ClaseService(ClaseRepository claseRepository, EntrenadorClient entrenadorClient) {
+    private final HorarioPublisher horarioPublisher;
+
+    public ClaseService(ClaseRepository claseRepository, EntrenadorClient entrenadorClient,
+            HorarioPublisher horarioPublisher) {
         this.claseRepository = claseRepository;
         this.entrenadorClient = entrenadorClient;
+        this.horarioPublisher = horarioPublisher;
+    }
+
+    /**
+     * Cambia el horario de una clase y publica el evento (pub/sub) para que miembros
+     * y entrenadores se enteren sin acoplarse a este servicio.
+     */
+    public Clase actualizarHorario(Long id, LocalDateTime nuevoHorario) {
+        Clase clase = obtenerClasePorId(id);
+        LocalDateTime anterior = clase.getHorario();
+        clase.setHorario(nuevoHorario);
+        Clase guardada = claseRepository.save(clase);
+        horarioPublisher.publicar(new HorarioCambiadoEvent(guardada.getId(), guardada.getNombre(), anterior, nuevoHorario));
+        return guardada;
     }
 
     /**

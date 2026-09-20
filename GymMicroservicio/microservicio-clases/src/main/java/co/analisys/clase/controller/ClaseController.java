@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import co.analisys.clase.dto.CambioHorarioRequest;
 import co.analisys.clase.model.Clase;
 import co.analisys.clase.service.ClaseService;
 
@@ -43,6 +45,20 @@ public class ClaseController {
     @PostMapping
     public Clase programarClase(@RequestBody Clase clase) {
         return claseService.programarClase(clase);
+    }
+
+    @Operation(summary = "Cambiar el horario de una clase", description = "Actualiza el horario y publica el cambio por RabbitMQ (pub/sub) a miembros y entrenadores. Roles permitidos: ADMIN, TRAINER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Horario actualizado y evento publicado"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "El rol del usuario no tiene permiso", content = @Content),
+            @ApiResponse(responseCode = "404", description = "La clase no existe", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER')")
+    @PutMapping("/{id}/horario")
+    public Clase actualizarHorario(@Parameter(description = "Id de la clase") @PathVariable Long id,
+            @RequestBody CambioHorarioRequest request) {
+        return claseService.actualizarHorario(id, request.horario());
     }
 
     @Operation(summary = "Listar clases", description = "Retorna todas las clases programadas. Roles permitidos: ADMIN, TRAINER, MEMBER.")

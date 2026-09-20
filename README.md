@@ -176,3 +176,20 @@ curl -X POST http://localhost:8082/api/clase -H "Content-Type: application/json"
 ## Secretos
 
 Los archivos `.env` están excluidos del repositorio. No subir credenciales reales de base de datos.
+
+## Comunicación asincrónica con RabbitMQ
+
+Broker en el `docker-compose.yml` raíz (`docker compose up -d rabbitmq`): AMQP `5672`, consola `http://localhost:15672` (guest / guest).
+
+| Función | Publica | Consume | Elementos |
+|---|---|---|---|
+| Notificación de inscripción | miembros (`POST /api/miembro`) | clases | exchange `inscripciones-exchange` (fanout) → `inscripciones-clases-queue` |
+| Cambio de horario (pub/sub) | clases (`PUT /api/clase/{id}/horario`) | miembros y entrenadores | exchange `horarios-exchange` (fanout) → `horarios-miembros-queue` y `horarios-entrenadores-queue` |
+| Pagos con DLQ | miembros (`POST /api/pago`, ADMIN/MEMBER) | miembros (`PagoProcessor`) | `pagos-queue` (TTL 30 s) → `pagos-dlq` |
+
+El consumidor de pagos reintenta 3 veces (`spring.rabbitmq.listener.simple.retry`) y, si sigue fallando, lanza `AmqpRejectAndDontRequeueException`: RabbitMQ envía el mensaje a `pagos-dlq`. Un pago es inválido si el monto es ≤ 0 o mayor a 5.000.000.
+
+```bash
+# Pago inválido: termina en pagos-dlq (verlo en la consola de RabbitMQ)
+curl -X POST http://localhost:8080/api/pago -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"miembroId":1,"monto":-5}'
+```
