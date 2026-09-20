@@ -55,7 +55,13 @@ Miembros y equipo no se comunican con otros servicios.
 ## Configuración de base de datos
 
 Cada servicio lee la conexión de las variables `DB_URL`, `DB_USER` y `DB_PASSWORD`, definidas en un
-archivo `.env` dentro de la carpeta del servicio (**no se versiona**). Copiar `.env.example` a `.env` y completar con los datos de tu base de datos.
+archivo `.env` dentro de la carpeta del servicio (**no se versiona**). Crearlo con los datos de tu base de datos:
+
+```
+DB_URL=jdbc:postgresql://<host>/<nombre_bd>?sslmode=require
+DB_USER=<usuario>
+DB_PASSWORD=<contraseña>
+```
 
 Para usar una base local, `microservicio-entrenadores/docker-compose.yml` levanta un PostgreSQL 16:
 
