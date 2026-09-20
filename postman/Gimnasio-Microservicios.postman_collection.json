@@ -1,0 +1,343 @@
+{
+  "info": {
+    "name": "Gimnasio - Microservicios",
+    "description": "Colección para probar los microservicios de Miembro, Equipo, Entrenador y Clase del Sistema de Gestión de un Gimnasio.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Miembro (:8080)",
+      "item": [
+        {
+          "name": "Listar miembros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{miembro_url}}/api/miembro",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "miembro"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear miembro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana Torres\",\n  \"email\": \"ana.torres@example.com\",\n  \"fechaInscripcion\": \"2026-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{miembro_url}}/api/miembro",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "miembro"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Equipo (:8081)",
+      "item": [
+        {
+          "name": "Listar equipos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{equipo_url}}/api/equipo",
+              "host": [
+                "{{equipo_url}}"
+              ],
+              "path": [
+                "api",
+                "equipo"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear equipo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Caminadora\",\n  \"descripcion\": \"Caminadora eléctrica\",\n  \"cantidad\": 5\n}"
+            },
+            "url": {
+              "raw": "{{equipo_url}}/api/equipo",
+              "host": [
+                "{{equipo_url}}"
+              ],
+              "path": [
+                "api",
+                "equipo"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entrenador (:8083)",
+      "item": [
+        {
+          "name": "Listar entrenadores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear entrenador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('entrenador_id', body.id);",
+                  "  console.log('entrenador_id guardado:', body.id);",
+                  "}",
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Rodríguez\",\n  \"especialidad\": \"Yoga\"\n}"
+            },
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          },
+          "description": "Guarda automáticamente el id creado en la variable de entorno entrenador_id, para usarlo luego al programar una clase."
+        },
+        {
+          "name": "Obtener entrenador por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador/{{entrenador_id}}",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador",
+                "{{entrenador_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar entrenador",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Rodríguez\",\n  \"especialidad\": \"CrossFit\"\n}"
+            },
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador/{{entrenador_id}}",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador",
+                "{{entrenador_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Eliminar entrenador",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador/{{entrenador_id}}",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador",
+                "{{entrenador_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clase (:8082)",
+      "item": [
+        {
+          "name": "Listar clases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clase_url}}/api/clase",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "clase"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Programar clase (entrenador válido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('clase_id', body.id);",
+                  "  console.log('clase_id guardado:', body.id);",
+                  "}",
+                  "pm.test('No dio error', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Yoga Matutino\",\n  \"horario\": \"2026-09-01T08:00:00\",\n  \"capacidadMaxima\": 20,\n  \"entrenadorId\": {{entrenador_id}}\n}"
+            },
+            "url": {
+              "raw": "{{clase_url}}/api/clase",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "clase"
+              ]
+            }
+          },
+          "description": "Usa el entrenador_id capturado por la petición 'Crear entrenador'. Ejecútala primero."
+        },
+        {
+          "name": "Obtener clase por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clase_url}}/api/clase/{{clase_id}}",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "clase",
+                "{{clase_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Programar clase (entrenador inexistente -> 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Spinning Vespertino\",\n  \"horario\": \"2026-09-01T18:00:00\",\n  \"capacidadMaxima\": 15,\n  \"entrenadorId\": 9999\n}"
+            },
+            "url": {
+              "raw": "{{clase_url}}/api/clase",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "clase"
+              ]
+            }
+          },
+          "description": "entrenadorId=9999 no existe: debe responder 400. Si además detienes el microservicio de Entrenador, esta misma petición debe responder 503 en vez de 400."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Solo se versiona GymMicroservicio/, DiagramaComponentes.pdf y los README
+/*
+!/.gitignore
+!/README.md
+!/GymMicroservicio/
+!/DiagramaComponentes.pdf
+!/postman/
+
+# Secretos y artefactos locales
+.env
+target/
+.DS_Store
+.vscode/
+.idea/
+HELP.md
+# Artefactos de herramientas (GitHub Copilot modernize, logs)
+.github/modernize/
