@@ -39,3 +39,8 @@ Configuración en `src/main/resources/application.properties`; las credenciales 
 curl -X POST http://localhost:8081/api/equipo -H "Content-Type: application/json" \
   -d '{"nombre":"Mancuernas","descripcion":"Par de 10 kg","cantidad":12}'
 ```
+
+## Seguridad y documentación
+
+Requiere JWT de Keycloak (realm `gimnasio`, ver README raíz). Roles: POST: ADMIN · GET: ADMIN, TRAINER, MEMBER.
+Swagger UI: http://localhost:8081/swagger-ui.html

@@ -98,3 +98,8 @@ curl -X POST http://localhost:8082/api/clase \
 
 curl http://localhost:8082/api/clase
 ```
+
+## Seguridad y documentación
+
+Requiere JWT de Keycloak (realm `gimnasio`, ver README raíz). Roles: POST: ADMIN, TRAINER · GET: ADMIN, TRAINER, MEMBER.
+Swagger UI: http://localhost:8082/swagger-ui.html

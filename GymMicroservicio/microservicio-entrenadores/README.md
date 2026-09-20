@@ -59,3 +59,8 @@ docker run -p 8083:8083 --env-file .env microservicio-entrenadores
 curl -X POST http://localhost:8083/api/entrenador -H "Content-Type: application/json" \
   -d '{"nombre":"Carlos Rodríguez","especialidad":"Yoga"}'
 ```
+
+## Seguridad y documentación
+
+Requiere JWT de Keycloak (realm `gimnasio`, ver README raíz). Roles: POST/PUT/DELETE: ADMIN · GET: ADMIN, TRAINER, MEMBER.
+Swagger UI: http://localhost:8083/swagger-ui.html

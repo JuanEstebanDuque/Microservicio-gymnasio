@@ -39,3 +39,8 @@ Configuración en `src/main/resources/application.properties`; las credenciales 
 curl -X POST http://localhost:8080/api/miembro -H "Content-Type: application/json" \
   -d '{"nombre":"Ana Pérez","email":"ana@mail.com","fechaInscripcion":"2026-09-01"}'
 ```
+
+## Seguridad y documentación
+
+Requiere JWT de Keycloak (realm `gimnasio`, ver README raíz). Roles: POST: ADMIN · GET: ADMIN, TRAINER.
+Swagger UI: http://localhost:8080/swagger-ui.html

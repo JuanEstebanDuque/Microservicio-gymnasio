@@ -9,11 +9,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import co.analisys.clase.model.Clase;
 import co.analisys.clase.service.ClaseService;
 
 @RestController
 @RequestMapping("/api/clase")
+@Tag(name = "Clases", description = "Programacion y consulta de clases del gimnasio")
 public class ClaseController {
 
     private final ClaseService claseService;
@@ -22,18 +31,42 @@ public class ClaseController {
         this.claseService = claseService;
     }
 
+    @Operation(summary = "Programar una clase", description = "Crea una clase validando por REST que el entrenador exista. Roles permitidos: ADMIN, TRAINER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operacion exitosa"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "El rol del usuario no tiene permiso", content = @Content),
+            @ApiResponse(responseCode = "400", description = "El entrenador indicado no existe", content = @Content),
+            @ApiResponse(responseCode = "503", description = "El microservicio de entrenadores no responde", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER')")
     @PostMapping
     public Clase programarClase(@RequestBody Clase clase) {
         return claseService.programarClase(clase);
     }
 
+    @Operation(summary = "Listar clases", description = "Retorna todas las clases programadas. Roles permitidos: ADMIN, TRAINER, MEMBER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operacion exitosa"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "El rol del usuario no tiene permiso", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER', 'MEMBER')")
     @GetMapping
     public List<Clase> obtenerTodasLasClases() {
         return claseService.obtenerTodasLasClases();
     }
 
+    @Operation(summary = "Obtener una clase", description = "Retorna la clase con el id indicado. Roles permitidos: ADMIN, TRAINER, MEMBER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operacion exitosa"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "El rol del usuario no tiene permiso", content = @Content),
+            @ApiResponse(responseCode = "404", description = "La clase no existe", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER', 'MEMBER')")
     @GetMapping("/{id}")
-    public Clase obtenerClasePorId(@PathVariable Long id) {
+    public Clase obtenerClasePorId(@Parameter(description = "Id de la clase") @PathVariable Long id) {
         return claseService.obtenerClasePorId(id);
     }
 }

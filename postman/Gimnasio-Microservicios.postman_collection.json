@@ -6,6 +6,316 @@
   },
   "item": [
     {
+      "name": "Autenticación (Keycloak) - ejecutar primero",
+      "item": [
+        {
+          "name": "Token admin (ROLE_ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token obtenido', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "entrenadores-client"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "admin"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/gimnasio/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "realms",
+                "gimnasio",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token trainer (ROLE_TRAINER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token obtenido', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "entrenadores-client"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "trainer"
+                },
+                {
+                  "key": "password",
+                  "value": "trainer123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/gimnasio/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "realms",
+                "gimnasio",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token member (ROLE_MEMBER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token obtenido', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "entrenadores-client"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "member"
+                },
+                {
+                  "key": "password",
+                  "value": "member123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/gimnasio/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "realms",
+                "gimnasio",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seguridad (401 / 403)",
+      "item": [
+        {
+          "name": "Sin token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token inválido -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "abc.def.ghi",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rol insuficiente: crear entrenador con token member/trainer -> 403 (usar antes 'Token member')",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": null,
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{entrenador_url}}/api/entrenador",
+              "host": [
+                "{{entrenador_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\":\"X\",\"especialidad\":\"Y\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Miembro (:8080)",
       "item": [
         {
@@ -339,5 +649,15 @@
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  }
 }
