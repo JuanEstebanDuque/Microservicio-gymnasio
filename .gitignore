@@ -5,6 +5,8 @@
 !/GymMicroservicio/
 !/DiagramaComponentes.pdf
 !/postman/
+!/keycloak/
+!docker-compose.yml
 
 # Secretos y artefactos locales
 .env
