@@ -1,0 +1,164 @@
+{
+  "realm": "gimnasio",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_ADMIN",
+        "description": "Administrador"
+      },
+      {
+        "name": "ROLE_TRAINER",
+        "description": "Entrenador"
+      },
+      {
+        "name": "ROLE_MEMBER",
+        "description": "Miembro"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "miembros-client",
+      "name": "miembros-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    },
+    {
+      "clientId": "equipo-client",
+      "name": "equipo-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    },
+    {
+      "clientId": "clases-client",
+      "name": "clases-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    },
+    {
+      "clientId": "entrenadores-client",
+      "name": "entrenadores-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@gimnasio.local",
+      "firstName": "Admin",
+      "lastName": "Demo",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_ADMIN"
+      ]
+    },
+    {
+      "username": "trainer",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "trainer@gimnasio.local",
+      "firstName": "Trainer",
+      "lastName": "Demo",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trainer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_TRAINER"
+      ]
+    },
+    {
+      "username": "member",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "member@gimnasio.local",
+      "firstName": "Member",
+      "lastName": "Demo",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "member123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_MEMBER"
+      ]
+    }
+  ]
+}
