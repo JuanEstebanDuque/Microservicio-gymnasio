@@ -2,6 +2,7 @@ package co.analisys.clase.kafka;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -66,9 +67,17 @@ public class RecuperacionService {
             this.consumer = kc;
             List<TopicPartition> particiones = esperarParticiones(kc);
             kc.assign(particiones);
+            Map<TopicPartition, Long> finDelLog = kc.endOffsets(particiones);
 
             for (TopicPartition tp : particiones) {
                 Long ultimo = checkpointService.cargarUltimoOffset(tp.topic(), tp.partition());
+                if (ultimo != null && ultimo + 1 > finDelLog.get(tp)) {
+                    // El checkpoint apunta mas alla del log: el broker se recreo y perdio sus datos.
+                    log.warn("[RECUPERACION] {} checkpoint {} fuera del log (fin {}): se reinicia desde el inicio",
+                            tp, ultimo, finDelLog.get(tp));
+                    checkpointService.reiniciarParticion(tp.topic(), tp.partition());
+                    ultimo = null;
+                }
                 if (ultimo != null) {
                     kc.seek(tp, ultimo + 1);
                     log.info("[RECUPERACION] {} retoma desde el checkpoint: offset {}", tp, ultimo + 1);

@@ -45,6 +45,13 @@ public class CheckpointService {
         checkpointRepository.save(c);
     }
 
+    /** Descarta checkpoint e historial de una particion cuyo log ya no existe en el broker. */
+    @Transactional
+    public void reiniciarParticion(String topic, int particion) {
+        historialRepository.deleteByKafkaPartition(particion);
+        checkpointRepository.deleteById(topic + "-" + particion);
+    }
+
     public Long cargarUltimoOffset(String topic, int particion) {
         return checkpointRepository.findById(topic + "-" + particion)
                 .map(CheckpointOffset::getUltimoOffset).orElse(null);

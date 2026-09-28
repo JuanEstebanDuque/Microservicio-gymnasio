@@ -648,6 +648,255 @@
           "description": "entrenadorId=9999 no existe: debe responder 400. Si además detienes el microservicio de Entrenador, esta misma petición debe responder 503 en vez de 400."
         }
       ]
+    },
+    {
+      "name": "RabbitMQ (asincrónico)",
+      "description": "Los resultados se ven en los logs de los servicios y en la consola de RabbitMQ: http://localhost:15672 (guest / guest).",
+      "item": [
+        {
+          "name": "Inscripción: crear miembro (notifica a clases)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana Prueba\",\n  \"email\": \"ana@test.com\",\n  \"fechaInscripcion\": \"2026-09-28\"\n}"
+            },
+            "url": {
+              "raw": "{{miembro_url}}/api/miembro",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "miembro"
+              ]
+            }
+          },
+          "description": "Token admin. En el log de clases aparece: [CLASES] Notificacion: nuevo miembro inscrito."
+        },
+        {
+          "name": "Pub/Sub: cambiar horario de clase",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horario\": \"2026-10-02T18:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{clase_url}}/api/clase/{{clase_id}}/horario",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "clase",
+                "{{clase_id}}",
+                "horario"
+              ]
+            }
+          },
+          "description": "Token admin o trainer. Usa clase_id. Lo reciben miembros ([MIEMBROS] Aviso...) y entrenadores ([ENTRENADORES] Aviso...)."
+        },
+        {
+          "name": "Pago válido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"miembroId\": 1,\n  \"monto\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{miembro_url}}/api/pago",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "pago"
+              ]
+            }
+          },
+          "description": "Responde 202. Log de miembros: [PAGOS] Pago aprobado."
+        },
+        {
+          "name": "Pago inválido -> pagos-dlq",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"miembroId\": 1,\n  \"monto\": -5\n}"
+            },
+            "url": {
+              "raw": "{{miembro_url}}/api/pago",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "pago"
+              ]
+            }
+          },
+          "description": "Responde 202. Miembros reintenta 3 veces ([PAGOS] Pago fallido) y el mensaje termina en la cola pagos-dlq (ver consola de RabbitMQ)."
+        }
+      ]
+    },
+    {
+      "name": "Kafka (streaming)",
+      "item": [
+        {
+          "name": "Publicar ocupación de clase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ocupacionActual\": 12\n}"
+            },
+            "url": {
+              "raw": "{{clase_url}}/api/ocupacion/{{clase_id}}",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "ocupacion",
+                "{{clase_id}}"
+              ]
+            }
+          },
+          "description": "Token admin o trainer. Publica en el topic ocupacion-clases."
+        },
+        {
+          "name": "Dashboard de ocupación (tiempo real)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clase_url}}/api/ocupacion",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "ocupacion"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Historial procesado (recuperación)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clase_url}}/api/ocupacion/historial",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "ocupacion",
+                "historial"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Checkpoint (último offset)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clase_url}}/api/ocupacion/checkpoint",
+              "host": [
+                "{{clase_url}}"
+              ],
+              "path": [
+                "api",
+                "ocupacion",
+                "checkpoint"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar entrenamiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"miembroId\": 1,\n  \"ejercicio\": \"Correr\",\n  \"duracionMin\": 30,\n  \"calorias\": 300,\n  \"fecha\": \"2026-09-28T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{miembro_url}}/api/entrenamiento",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenamiento"
+              ]
+            }
+          },
+          "description": "Cualquier rol. Publica en el topic datos-entrenamiento; Kafka Streams lo agrega en ventanas de 7 días. Cambia la fecha a la semana actual."
+        },
+        {
+          "name": "Resumen semanal de entrenamiento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{miembro_url}}/api/entrenamiento/resumen/1",
+              "host": [
+                "{{miembro_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenamiento",
+                "resumen",
+                "1"
+              ]
+            }
+          },
+          "description": "Esperar unos segundos después de registrar entrenamientos."
+        }
+      ]
     }
   ],
   "auth": {

@@ -9,4 +9,6 @@ import co.analisys.clase.model.OcupacionHistorial;
 public interface OcupacionHistorialRepository extends JpaRepository<OcupacionHistorial, Long> {
 
     List<OcupacionHistorial> findTop50ByOrderByIdDesc();
+
+    void deleteByKafkaPartition(int kafkaPartition);
 }
