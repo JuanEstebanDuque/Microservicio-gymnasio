@@ -10,9 +10,11 @@ El diagrama de componentes está en [`DiagramaComponentes.pdf`](DiagramaComponen
 ```
 .
 ├── DiagramaComponentes.pdf
-├── docker-compose.yml                # Keycloak
+├── docker-compose.yml                # Keycloak, RabbitMQ y Kafka
 ├── keycloak/                         # Realm gimnasio exportado
 ├── postman/                          # Colección y entorno de Postman
+├── eureka-server/                    # Registro y descubrimiento  (puerto 8761)
+├── api-gateway/                      # Puerta de entrada única    (puerto 8090)
 └── GymMicroservicio/
     ├── microservicio-miembros/       # Gestión de miembros       (puerto 8080)
     ├── microservicio-equipo/         # Gestión de equipos        (puerto 8081)
@@ -21,7 +23,8 @@ El diagrama de componentes está en [`DiagramaComponentes.pdf`](DiagramaComponen
 ```
 
 Todos los servicios son proyectos Maven independientes (Spring Boot, Java 17, Spring Data JPA,
-PostgreSQL, Lombok). Cada uno tiene su propio README con detalles.
+PostgreSQL, Lombok). Cada uno tiene su propio README con detalles. `eureka-server` y `api-gateway`
+no tienen base de datos; se describen en [API Gateway y descubrimiento de servicios](#api-gateway-y-descubrimiento-de-servicios).
 
 | Servicio | Puerto | Base de datos | Ruta base | Depende de |
 |---|---|---|---|---|
@@ -76,14 +79,25 @@ docker compose up -d      # postgres en localhost:5432, db gimnasio_test
 
 ## Ejecución
 
-Levantar cada servicio en su propia terminal (**entrenadores debe estar arriba para poder crear clases**):
+Primero la infraestructura (Keycloak, RabbitMQ y Kafka), desde la raíz:
 
 ```bash
+docker compose up -d
+```
+
+Luego cada aplicación en su propia terminal, en este orden (**entrenadores debe estar arriba para poder crear clases**):
+
+```bash
+cd eureka-server                                 && ./mvnw spring-boot:run   # 8761
 cd GymMicroservicio/microservicio-miembros       && ./mvnw spring-boot:run   # 8080
 cd GymMicroservicio/microservicio-equipo         && ./mvnw spring-boot:run   # 8081
 cd GymMicroservicio/microservicio-entrenadores   && ./mvnw spring-boot:run   # 8083
 cd GymMicroservicio/microservicio-clases         && ./mvnw spring-boot:run   # 8082
+cd api-gateway                                   && ./mvnw spring-boot:run   # 8090
 ```
+
+El orden no es estricto (los clientes de Eureka reintentan el registro), pero si el gateway arranca antes
+de que los servicios se registren puede responder `503` durante unos 30 segundos.
 
 En Windows usar `mvnw.cmd` en lugar de `./mvnw`.
 
@@ -139,6 +153,51 @@ curl -s -X POST http://localhost:8180/realms/gimnasio/protocol/openid-connect/to
 # usar el campo access_token:  -H "Authorization: Bearer <token>"
 ```
 
+## API Gateway y descubrimiento de servicios
+
+[`api-gateway`](api-gateway) (Spring Cloud Gateway, reactivo) es la puerta de entrada única en `http://localhost:8090`:
+el cliente ya no necesita conocer el puerto de cada microservicio. [`eureka-server`](eureka-server) es el registro
+donde los 4 microservicios y el gateway se anotan al arrancar (panel en `http://localhost:8761`).
+
+**Enrutamiento.** Las rutas usan el nombre con que cada servicio se registra en Eureka (`lb://nombre`), no URLs fijas:
+
+| Path en el gateway | Servicio (Eureka) | Definida en |
+|---|---|---|
+| `/api/miembro/**`, `/api/pago/**`, `/api/entrenamiento/**` | `lb://miembros` | `application.yml` |
+| `/api/equipo/**` | `lb://equipo` | `application.yml` |
+| `/api/clase/**`, `/api/ocupacion/**` | `lb://clase` | `application.yml` |
+| `/api/entrenador/**` | `lb://entrenador` | `RutasConfig` (Java) |
+| `GET /api/resumen/miembro/{id}` | — (filtro de agregación) | `RutasConfig` (Java) |
+
+**Seguridad.** El gateway también es *resource server* del realm `gimnasio`: valida el JWT antes de enrutar y
+rechaza con `401` las peticiones sin token válido. Solo `/actuator/health` es público, y `DELETE /api/**` exige
+`ROLE_ADMIN` (`403` en otro caso). El header `Authorization` se reenvía tal cual, así que cada microservicio
+sigue aplicando sus `@PreAuthorize`: son dos capas de autorización.
+
+**Balanceo de carga.** Spring Cloud LoadBalancer reparte en round-robin entre las instancias registradas.
+Para verlo, levantar una segunda instancia de entrenadores y llamar varias veces a `GET /api/entrenador` por el gateway:
+
+```bash
+cd GymMicroservicio/microservicio-entrenadores
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8093
+```
+
+**Filtro de agregación.** `GET /api/resumen/miembro/{id}` devuelve en una sola respuesta el panel de un miembro.
+`ResumenMiembroFilter` consulta en paralelo a tres servicios, reenviando el JWT del usuario, y anida sus respuestas:
+
+| Sección | Servicio | Endpoint consultado |
+|---|---|---|
+| `entrenamientoSemanal` | miembros | `/api/entrenamiento/resumen/{id}` |
+| `clases` | clase | `/api/clase` |
+| `ocupacionEnVivo` | clase | `/api/ocupacion` |
+| `entrenadores` | entrenador | `/api/entrenador` |
+
+Si un servicio falla o está caído, su sección queda en `null` y el resto del panel responde igual. Un id no numérico responde `404`.
+
+```bash
+curl http://localhost:8090/api/resumen/miembro/1 -H "Authorization: Bearer $TOKEN"
+```
+
 ## Documentación de la API (Swagger / OpenAPI)
 
 Cada servicio publica su documentación (endpoints, parámetros y respuestas 200/201/400/401/403/404/503):
@@ -162,6 +221,10 @@ En [`postman/`](postman) hay una colección con todos los endpoints de los 4 ser
 4. Ejecutar las peticiones. El entorno define las URLs (`miembro_url`, `equipo_url`, `clase_url`, `entrenador_url`, puertos 8080-8083) y las variables `entrenador_id` y `clase_id`, que hay que rellenar con el id devuelto al crear cada recurso.
 
 La colección incluye el caso de error de clases con un entrenador inexistente (responde `400`).
+
+La carpeta **API Gateway (puerto 8090)** prueba el enrutamiento, la seguridad del gateway (401 / 403), el registro
+en Eureka y el filtro de agregación, usando las variables `gateway_url` y `eureka_url`. La petición
+"DELETE sin rol admin" requiere ejecutar antes **Token trainer** o **Token member**.
 
 ## Prueba rápida
 

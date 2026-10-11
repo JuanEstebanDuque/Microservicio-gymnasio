@@ -7,6 +7,9 @@
 !/postman/
 !/keycloak/
 !docker-compose.yml
+!api-gateway/
+!eureka-server/
+!TALLER_API_GATEWAY.md
 
 # Secretos y artefactos locales
 .env

@@ -648,6 +648,363 @@
           "description": "entrenadorId=9999 no existe: debe responder 400. Si además detienes el microservicio de Entrenador, esta misma petición debe responder 503 en vez de 400."
         }
       ]
+    },
+    {
+      "name": "API Gateway (puerto 8090)",
+      "description": "Mismas APIs de los microservicios pero entrando por el gateway. Ejecutar antes una peticion de la carpeta Autenticacion.",
+      "item": [
+        {
+          "name": "Enrutamiento: entrenadores (ruta en RutasConfig)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/entrenador",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          },
+          "description": "Ruta definida en Java. Con dos instancias de entrenadores levantadas, repetir varias veces para ver el balanceo en las consolas."
+        },
+        {
+          "name": "Enrutamiento: clases (ruta en application.yml)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/clase",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "clase"
+              ]
+            }
+          },
+          "description": "Ruta definida en YAML hacia lb://clase."
+        },
+        {
+          "name": "Enrutamiento: equipo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/equipo",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "equipo"
+              ]
+            }
+          },
+          "description": "Ruta definida en YAML hacia lb://equipo."
+        },
+        {
+          "name": "Enrutamiento: miembros",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/miembro",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "miembro"
+              ]
+            }
+          },
+          "description": "Ruta definida en YAML hacia lb://miembros. Requiere token de admin o trainer."
+        },
+        {
+          "name": "Seguridad: sin token -> 401 (rechaza el gateway)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/noexiste",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "noexiste"
+              ]
+            }
+          },
+          "description": "La ruta /noexiste no coincide con ningun microservicio: el 401 solo puede venir del gateway."
+        },
+        {
+          "name": "Seguridad: token invalido -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/entrenador",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador"
+              ]
+            }
+          },
+          "description": "El gateway verifica la firma del JWT contra Keycloak antes de enrutar."
+        },
+        {
+          "name": "Seguridad: DELETE sin rol admin -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/entrenador/999999",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "entrenador",
+                "999999"
+              ]
+            }
+          },
+          "description": "Ejecutar antes \"Token trainer\" o \"Token member\". Regla del gateway: DELETE /api/** exige ROLE_ADMIN."
+        },
+        {
+          "name": "Health sin token -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/actuator/health",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "description": "Unico endpoint abierto del gateway."
+        },
+        {
+          "name": "Eureka: servicios registrados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const nombres = pm.response.json().applications.application.map(a => a.name);",
+                  "['MIEMBROS', 'EQUIPO', 'CLASE', 'ENTRENADOR', 'API-GATEWAY'].forEach(n =>",
+                  "  pm.test(n + ' registrado', () => pm.expect(nombres).to.include(n)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{eureka_url}}/eureka/apps",
+              "host": [
+                "{{eureka_url}}"
+              ],
+              "path": [
+                "eureka",
+                "apps"
+              ]
+            }
+          },
+          "description": "Consulta el registro de Eureka: deben estar los 4 microservicios y el gateway."
+        },
+        {
+          "name": "Paso 5 - Panel del miembro (agregacion)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Trae las 4 secciones', () => pm.expect(pm.response.json()).to.have.all.keys('entrenamientoSemanal', 'clases', 'ocupacionEnVivo', 'entrenadores'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/resumen/miembro/1",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "resumen",
+                "miembro",
+                "1"
+              ]
+            }
+          },
+          "description": "Requiere el filtro ResumenMiembroFilter (paso 5). Una sola respuesta con datos de miembros, clase y entrenador."
+        },
+        {
+          "name": "Paso 5 - Panel con id no numerico -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/resumen/miembro/abc",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "resumen",
+                "miembro",
+                "abc"
+              ]
+            }
+          },
+          "description": "Requiere el paso 5. La ruta solo acepta ids numericos."
+        }
+      ]
     }
   ],
   "auth": {
